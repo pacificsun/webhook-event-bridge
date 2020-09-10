@@ -1,6 +1,5 @@
-
 service: stripe-eventbridge
-frameworkVersion: ">=1.54.0 <2.0.0"
+frameworkVersion: '>=1.54.0 <2.0.0'
 
 provider:
   name: aws
@@ -8,27 +7,28 @@ provider:
   memorySize: 256
 
   stage: dev
-  region: us-east-1
+  region: ap-southeast-2
   endpointType: EDGE
-  logs:                # Enable CloudWatch logs
+  logs: # Enable CloudWatch logs
     restApi: true
-  tracing:             # Enable X-Ray tracing
+  tracing: # Enable X-Ray tracing
     apiGateway: true
 
   iamRoleStatements:
-    - Effect: "Allow"
+    - Effect: 'Allow'
       Action:
-        - "secretsmanager:GetSecretValue"
-      Resource: "${cf:stripe-eventbridge-deps-${self:provider.stage}.StripeWebhookSecretArn}"
-    - Effect: "Allow"
+        - 'secretsmanager:GetSecretValue'
+      Resource: '${cf:stripe-eventbridge-deps-${self:provider.stage}.StripeWebhookSecretArn}'
+    - Effect: 'Allow'
       Action:
-        - "sns:Publish"
+        - 'sns:Publish'
       Resource: ${cf:stripe-eventbridge-deps-${self:provider.stage}.SNSTargetForFailedEvents}
-    - Effect: "Allow"
+    - Effect: 'Allow'
       Action:
-        - "events:PutEvents"
-      Resource: "*"
-
+        - 'events:PutEvents'
+      Resource: '*'
+custom:
+  base: st-web-saas-${self:provider.stage}
 functions:
   stripe-webhook:
     handler: handler.stripeWebhook
@@ -38,6 +38,8 @@ functions:
           method: post
           async: false
     environment:
-      FAILURE_SNS: ${cf:stripe-eventbridge-deps-${self:provider.stage}.SNSTargetForFailedEvents}
-      EVENT_BRIDGE: "default"
-      ENDPOINT_SECRET: "${cf:stripe-eventbridge-deps-${self:provider.stage}.StripeWebhookSecretArn.Name}"
+      FAILURE_SNS:
+        Fn::ImportValue: ${self:custom.base}-SNSTargetForFailedEvents
+      EVENT_BRIDGE: 'default'
+      ENDPOINT_SECRET:
+        Fn::ImportValue: ${self:custom.base}-StripeWebhookSecret
