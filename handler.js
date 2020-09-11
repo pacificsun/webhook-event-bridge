@@ -1,4 +1,3 @@
-'use strict';
 const stripe = require('stripe'),
   eventbridge = require('./lib/eventbridge'),
   sns = require('./lib/sns'),
