@@ -1,35 +1,28 @@
-const stripe = require('stripe'),
-  eventbridge = require('./lib/eventbridge'),
-  sns = require('./lib/sns'),
-  AWS = require('aws-sdk'),
-  { promisify } = require('util'),
-  secretName = process.env.ENDPOINT_SECRET;
-
-var client = new AWS.SecretsManager();
-client.fetchSecret = promisify(client.getSecretValue);
-
+// import Strpe from 'stripe';
+// const stripe = new Strpe(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe');
 module.exports.stripeWebhook = async (event) => {
   console.log('event in handler>>', event);
   let err = null;
   try {
     const signature = event.headers['Stripe-Signature'];
     console.log('signature>>', signature);
-    const secret = (await client.fetchSecret({ SecretId: secretName }))
-      .SecretString;
+    const secret = process.env.STRIPE_WEBHOOKS_SECRET_KEY;
     console.log('secret>>', secret);
+    console.log('event.body>>', event.body);
+    console.log('event.headers>>', event.headers);
     const eventReceived = stripe.webhooks.constructEvent(
       event.body,
       signature,
       secret
     );
     console.log('eventRecevied>>', eventReceived);
-    await eventbridge.sendToEventBridge(
-      process.env.EVENT_BRIDGE,
-      eventReceived
-    );
+    // await eventbridge.sendToEventBridge(
+    //   process.env.EVENT_BRIheaheadersdersheadersDGE,
+    //   eventReceived
+    // );
   } catch (e) {
-    err = e;
-    await sns.notifyFailure(e.message);
+    console.error(e);
   }
   const body = err ? JSON.stringify(err) : '';
   const statusCode = err ? 500 : 200;
